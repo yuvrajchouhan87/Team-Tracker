@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const Task = require('../models/Task');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, checkPermission } = require('../middleware/authMiddleware');
 
 // Get all messages for a task (task creator and assignee only)
-router.get('/:taskId', protect, async (req, res) => {
+router.get('/:taskId', protect, checkPermission('chat', 'view'), async (req, res) => {
   try {
     const { taskId } = req.params;
 
@@ -35,7 +35,7 @@ router.get('/:taskId', protect, async (req, res) => {
 });
 
 // Mark all messages for a task as read for the current user
-router.put('/:taskId/read', protect, async (req, res) => {
+router.put('/:taskId/read', protect, checkPermission('chat', 'view'), async (req, res) => {
   try {
     const { taskId } = req.params;
     await Message.updateMany(

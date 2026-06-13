@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
-const { protect, managerOnly, adminOnly, adminOrManager } = require('../middleware/authMiddleware');
+const { protect, checkPermission, managerOnly, adminOnly, adminOrManager } = require('../middleware/authMiddleware');
 
 // Get all tasks
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, checkPermission('tasks', 'view'), async (req, res) => {
     try {
         let tasks;
         if (req.user.role === 'SuperAdmin') {
@@ -35,7 +35,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Create a task
-router.post('/', protect, adminOrManager, async (req, res) => {
+router.post('/', protect, checkPermission('tasks', 'create'), adminOrManager, async (req, res) => {
     const { title, description, priority, deadline, assignedTo } = req.body;
     try {
         const task = new Task({
@@ -54,7 +54,7 @@ router.post('/', protect, adminOrManager, async (req, res) => {
 });
 
 // Update task status and progress
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, checkPermission('tasks', 'edit'), async (req, res) => {
     const { status, progress } = req.body;
     try {
         const task = await Task.findById(req.params.id);
@@ -77,7 +77,7 @@ router.put('/:id', protect, async (req, res) => {
 });
 
 // Delete a task
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+router.delete('/:id', protect, checkPermission('tasks', 'delete'), adminOnly, async (req, res) => {
     try {
         const task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({ message: 'Task not found' });

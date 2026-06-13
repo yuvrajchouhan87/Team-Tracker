@@ -18,7 +18,7 @@ import ChatModal from './components/ChatModal';
 import { useContext } from 'react';
 import AuthContext from './context/AuthContext';
 
-const PrivateRoute = ({ children, roles }) => {
+const PrivateRoute = ({ children, roles, permission }) => {
   const { user, loading, isSidebarOpen, setIsSidebarOpen } = useContext(AuthContext);
 
   if (loading) return (
@@ -31,7 +31,17 @@ const PrivateRoute = ({ children, roles }) => {
   );
 
   if (!user) return <Navigate to="/login" />;
+  
+  // Check Role
   if (roles && !roles.includes(user.role)) return <Navigate to="/" />;
+
+  // Check Permission
+  if (permission) {
+    const { module, action } = permission;
+    if (user.role !== 'SuperAdmin' && (!user.permissions?.[module]?.[action])) {
+      return <Navigate to="/" />;
+    }
+  }
 
 
   return (
@@ -57,22 +67,31 @@ const PrivateRoute = ({ children, roles }) => {
   );
 };
 
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) return null;
+  if (user) return <Navigate to="/" />;
+
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
+            <Route path="/tasks" element={<PrivateRoute permission={{ module: 'tasks', action: 'view' }}><Tasks /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute roles={['SuperAdmin']}><AdminDashboard /></PrivateRoute>} />
             <Route path="/permission-requests/:status?" element={<PrivateRoute roles={['SuperAdmin']}><PermissionRequests /></PrivateRoute>} />
             <Route path="/team" element={<PrivateRoute roles={['SuperAdmin']}><Team /></PrivateRoute>} />
-            <Route path="/assign-task" element={<PrivateRoute roles={['SuperAdmin', 'Manager']}><AssignTask /></PrivateRoute>} />
-            <Route path="/chat" element={<PrivateRoute roles={['Developer', 'Intern']}><Chat /></PrivateRoute>} />
-            <Route path="/ai-chat" element={<PrivateRoute><AIChatPage /></PrivateRoute>} />
+            <Route path="/assign-task" element={<PrivateRoute roles={['SuperAdmin', 'Manager']} permission={{ module: 'tasks', action: 'create' }}><AssignTask /></PrivateRoute>} />
+            <Route path="/chat" element={<PrivateRoute roles={['Developer', 'Intern']} permission={{ module: 'chat', action: 'view' }}><Chat /></PrivateRoute>} />
+            <Route path="/ai-chat" element={<PrivateRoute permission={{ module: 'aiChat', action: 'view' }}><AIChatPage /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           </Routes>
         </BrowserRouter>

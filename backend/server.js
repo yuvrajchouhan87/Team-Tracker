@@ -26,9 +26,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-  'http://127.0.0.1:5175',
+  'https://team-tracker-blue.vercel.app'
 ];
 
 app.use(
@@ -78,7 +76,7 @@ io.use(async (socket, next) => {
 
 io.on('connection', (socket) => {
   console.log('Socket connected', socket.id);
-  
+
   // Join personal room for notifications
   socket.join(`user_${socket.user.id}`);
 

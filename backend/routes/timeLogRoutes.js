@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const TimeLog = require('../models/TimeLog');
 const Task = require('../models/Task');
-const { protect, managerOnly } = require('../middleware/authMiddleware');
+const { protect, checkPermission, managerOnly } = require('../middleware/authMiddleware');
 
 // Get all time logs (Manager sees all, Employee sees own)
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, checkPermission('timeLogs', 'view'), async (req, res) => {
     try {
         let logs;
         if (req.user.role === 'Manager' || req.user.role === 'SuperAdmin') {
@@ -20,7 +20,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // Start a new time log
-router.post('/start', protect, async (req, res) => {
+router.post('/start', protect, checkPermission('timeLogs', 'create'), async (req, res) => {
     const { taskId } = req.body;
     try {
         const task = await Task.findById(taskId);
@@ -45,7 +45,7 @@ router.post('/start', protect, async (req, res) => {
 });
 
 // Stop the current time log
-router.put('/stop/:id', protect, async (req, res) => {
+router.put('/stop/:id', protect, checkPermission('timeLogs', 'edit'), async (req, res) => {
     try {
         const log = await TimeLog.findById(req.params.id);
         if (!log) return res.status(404).json({ message: 'Time log not found' });
