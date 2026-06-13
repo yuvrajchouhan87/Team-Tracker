@@ -37,7 +37,7 @@ const Tasks = () => {
 
     const fetchTasks = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5000/api/tasks');
+            const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/tasks');
             setTasks(data);
         } catch (error) {
             console.error('Error fetching tasks', error);
@@ -48,7 +48,7 @@ const Tasks = () => {
 
     const fetchUsers = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5000/api/auth/users');
+            const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users');
             setUsers(data.filter(u => u.status === 'Approved' && u.role !== 'SuperAdmin'));
         } catch (error) {
             console.error('Error fetching users', error);

@@ -21,7 +21,7 @@ import {
     BarChart3, CheckCircle2, Clock, AlertCircle
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
 
 ChartJS.register(
@@ -77,8 +77,8 @@ const Dashboard = () => {
         const fetchData = async () => {
             try {
                 const [tasksRes, timeLogsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/tasks'),
-                    axios.get('http://localhost:5000/api/timelogs')
+                    axios.get('https://team-tracker-dbzf.onrender.com/api/tasks'),
+                    axios.get('https://team-tracker-dbzf.onrender.com/api/timelogs')
                 ]);
                 setTasks(tasksRes.data);
                 setTimeLogs(timeLogsRes.data);

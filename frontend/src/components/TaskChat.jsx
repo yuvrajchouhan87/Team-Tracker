@@ -52,7 +52,7 @@ const TaskChat = ({ task, currentUser, otherUser, onClose, inline = false }) => 
     const loadMessages = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`http://localhost:5000/api/messages/${taskId}`);
+        const { data } = await axios.get(`https://team-tracker-dbzf.onrender.com/api/messages/${taskId}`);
         if (!cancelled) setMessages(data);
       } catch (error) {
         if (!cancelled) {
@@ -77,7 +77,7 @@ const TaskChat = ({ task, currentUser, otherUser, onClose, inline = false }) => 
     
     // Mark as read when first joining/switching to this task
     if (taskId) {
-      axios.put(`http://localhost:5000/api/messages/${taskId}/read`).catch(() => {});
+      axios.put(`https://team-tracker-dbzf.onrender.com/api/messages/${taskId}/read`).catch(() => {});
     }
 
     const handler = (msg) => {
@@ -86,7 +86,7 @@ const TaskChat = ({ task, currentUser, otherUser, onClose, inline = false }) => 
 
       // If we are getting a message for the CURRENT active task, mark it as read immediately
       if (msg.sender?._id !== currentUser?._id) {
-        axios.put(`http://localhost:5000/api/messages/${taskId}/read`).catch(() => {});
+        axios.put(`https://team-tracker-dbzf.onrender.com/api/messages/${taskId}/read`).catch(() => {});
       }
 
       setMessages((prev) => {

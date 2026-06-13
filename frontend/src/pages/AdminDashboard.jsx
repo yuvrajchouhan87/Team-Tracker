@@ -41,8 +41,8 @@ const AdminDashboard = () => {
     const fetchData = async () => {
         try {
             const [usersRes, tasksRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/auth/users'),
-                axios.get('http://localhost:5000/api/tasks')
+                axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users'),
+                axios.get('https://team-tracker-dbzf.onrender.com/api/tasks')
             ]);
             setUsers(usersRes.data);
             setTasks(tasksRes.data);
@@ -59,7 +59,7 @@ const AdminDashboard = () => {
 
     const handleApprove = async (userId, selectedRole) => {
         try {
-            await axios.put(`http://localhost:5000/api/auth/users/${userId}/approve`, { role: selectedRole });
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/auth/users/${userId}/approve`, { role: selectedRole });
             fetchData();
         } catch (error) {
             alert('Failed to approve user');
@@ -69,7 +69,7 @@ const AdminDashboard = () => {
     const handleReject = async (userId, userName) => {
         if (!window.confirm(`Are you sure you want to reject "${userName}"?`)) return;
         try {
-            await axios.put(`http://localhost:5000/api/auth/users/${userId}/reject`);
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/auth/users/${userId}/reject`);
             fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to reject user');
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
     const handleDeleteTask = async (taskId) => {
         if (!window.confirm('Are you sure you want to delete this task?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/tasks/${taskId}`);
+            await axios.delete(`https://team-tracker-dbzf.onrender.com/api/tasks/${taskId}`);
             fetchData();
         } catch (error) {
             alert('Failed to delete task');
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
     const handleCreateTask = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/tasks', { title, description, priority, deadline, assignedTo });
+            await axios.post('https://team-tracker-dbzf.onrender.com/api/tasks', { title, description, priority, deadline, assignedTo });
             setTitle(''); setDescription(''); setPriority('Medium'); setDeadline(''); setAssignedTo('');
             fetchData();
             const userObj = allApprovedUsers.find(u => u._id === assignedTo);

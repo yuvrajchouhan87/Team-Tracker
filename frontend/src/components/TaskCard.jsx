@@ -29,7 +29,7 @@ const TaskCard = ({ task, onUpdate }) => {
 
     const handleStatusChange = async (e) => {
         try {
-            await axios.put(`http://localhost:5000/api/tasks/${task._id}`, { status: e.target.value });
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/tasks/${task._id}`, { status: e.target.value });
             onUpdate();
         } catch (error) {
             console.error('Error updating status', error);
@@ -38,7 +38,7 @@ const TaskCard = ({ task, onUpdate }) => {
 
     const startTimer = async () => {
         try {
-            const res = await axios.post('http://localhost:5000/api/timelogs/start', { taskId: task._id });
+            const res = await axios.post('https://team-tracker-dbzf.onrender.com/api/timelogs/start', { taskId: task._id });
             setIsTimerRunning(true);
             setCurrentLogId(res.data._id);
         } catch (error) {
@@ -48,7 +48,7 @@ const TaskCard = ({ task, onUpdate }) => {
 
     const stopTimer = async () => {
         try {
-            await axios.put(`http://localhost:5000/api/timelogs/stop/${currentLogId}`);
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/timelogs/stop/${currentLogId}`);
             setIsTimerRunning(false);
             setCurrentLogId(null);
             onUpdate();

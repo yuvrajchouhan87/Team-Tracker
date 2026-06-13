@@ -21,7 +21,7 @@ const AssignTask = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/auth/users');
+                const res = await axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users');
                 let approved = res.data.filter(u => u.status === 'Approved' && u.role !== 'SuperAdmin');
                 if (currentUser?.role === 'Manager') {
                     approved = approved.filter(u => u.role === 'Developer' || u.role === 'Intern');
@@ -40,7 +40,7 @@ const AssignTask = () => {
         setSuccessMsg('');
         setErrorMsg('');
         try {
-            await axios.post('http://localhost:5000/api/tasks', {
+            await axios.post('https://team-tracker-dbzf.onrender.com/api/tasks', {
                 title, description, priority, deadline, assignedTo
             });
             const userObj = users.find(u => u._id === assignedTo);

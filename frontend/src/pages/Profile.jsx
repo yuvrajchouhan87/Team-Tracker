@@ -3,7 +3,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { User, Camera, Save } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
 const resolveAvatar = (avatarUrl) => {
   if (!avatarUrl) return '';

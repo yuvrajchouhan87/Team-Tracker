@@ -71,7 +71,7 @@ const Chat = () => {
     useEffect(() => {
         const fetchTasks = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5000/api/tasks');
+                const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/tasks');
                 const chatableTasks = data.filter(task => {
                     const partner = (user.role === 'Manager' || user.role === 'SuperAdmin')
                         ? task.assignedTo
@@ -108,7 +108,7 @@ const Chat = () => {
         setSelectedTask(task);
         if (task.unreadCount > 0) {
             try {
-                await axios.put(`http://localhost:5000/api/messages/${task._id}/read`);
+                await axios.put(`https://team-tracker-dbzf.onrender.com/api/messages/${task._id}/read`);
                 setTasks(prev => prev.map(t => 
                     t._id === task._id ? { ...t, unreadCount: 0 } : t
                 ));

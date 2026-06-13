@@ -4,7 +4,7 @@ import AuthContext from './AuthContext';
 
 const SocketContext = createContext(null);
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = 'https://team-tracker-dbzf.onrender.com';
 
 export const SocketProvider = ({ children }) => {
   const { user } = useContext(AuthContext);

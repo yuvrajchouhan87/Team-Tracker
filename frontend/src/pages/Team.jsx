@@ -4,7 +4,7 @@ import { Users, UserCheck, UserPlus, Search, Mail, Shield, Briefcase, Graduation
 import AuthContext from '../context/AuthContext';
 import PermissionModal from '../components/PermissionModal';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
 const Team = () => {
     const { searchQuery } = useContext(AuthContext);

@@ -32,8 +32,8 @@ const AIChatPage = () => {
     const fetchContext = async () => {
         try {
             const [usersRes, tasksRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/auth/users'),
-                axios.get('http://localhost:5000/api/tasks')
+                axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users'),
+                axios.get('https://team-tracker-dbzf.onrender.com/api/tasks')
             ]);
             setDashboardData({
                 users: usersRes.data,

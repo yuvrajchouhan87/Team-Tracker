@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Shield, Check, Info, LayoutDashboard, MessageCircle, Bot, User, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
 const PermissionModal = ({ user, onClose, onUpdate }) => {
     const [permissions, setPermissions] = useState(user.permissions || {});

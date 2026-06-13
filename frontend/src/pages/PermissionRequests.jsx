@@ -12,7 +12,7 @@ const PermissionRequests = () => {
 
     const fetchUsers = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5000/api/auth/users');
+            const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users');
             setUsers(data);
         } catch (error) {
             console.error('Error fetching users', error);
@@ -27,7 +27,7 @@ const PermissionRequests = () => {
 
     const handleApprove = async (userId, selectedRole) => {
         try {
-            await axios.put(`http://localhost:5000/api/auth/users/${userId}/approve`, { role: selectedRole });
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/auth/users/${userId}/approve`, { role: selectedRole });
             fetchUsers();
             alert('User approved successfully!');
         } catch (error) {
@@ -38,7 +38,7 @@ const PermissionRequests = () => {
     const handleReject = async (userId, userName) => {
         if (!window.confirm(`Are you sure you want to reject "${userName}"?`)) return;
         try {
-            await axios.put(`http://localhost:5000/api/auth/users/${userId}/reject`);
+            await axios.put(`https://team-tracker-dbzf.onrender.com/api/auth/users/${userId}/reject`);
             fetchUsers();
             alert('User request rejected.');
         } catch (error) {

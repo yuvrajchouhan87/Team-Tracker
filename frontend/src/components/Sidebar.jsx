@@ -5,7 +5,7 @@ import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { LayoutDashboard, CheckSquare, Zap, User, ClipboardList, Users, ChevronDown, UserPlus, MessageCircle, Sparkles, X } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 const resolveAvatar = (avatarUrl) => {
     if (!avatarUrl) return '';
     if (avatarUrl.startsWith('http')) return avatarUrl;
@@ -213,7 +213,7 @@ const UnreadTotalBadge = () => {
     useEffect(() => {
         const fetchCounts = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5000/api/tasks');
+                const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/tasks');
                 const count = data.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
                 setTotal(count);
             } catch (e) {}

@@ -6,7 +6,7 @@ import {
     UserCheck, UserX, RefreshCw, Zap, PlayCircle
 } from 'lucide-react';
 
-const API = 'http://localhost:5000';
+const API = 'https://team-tracker-dbzf.onrender.com';
 
 // ── Markdown Renderer ────────────────────────────────────────────────────────
 const renderMarkdown = (text) => {

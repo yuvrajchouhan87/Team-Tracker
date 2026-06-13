@@ -5,7 +5,7 @@ import { LogOut, Sun, Moon, User, ChevronDown, Search, Bell, Home, MessageCircle
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 const resolveAvatar = (avatarUrl) => {
     if (!avatarUrl) return '';
     if (avatarUrl.startsWith('http')) return avatarUrl;
