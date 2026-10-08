@@ -1,9 +1,10 @@
 import { useContext, useState, useRef, useEffect } from 'react';
 import AuthContext from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LogOut, Sun, Moon, User, ChevronDown, Search, Bell, Home, MessageCircle, UserPlus, Menu } from 'lucide-react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut, Sun, Moon, User, ChevronDown, Search, Bell, Menu, MessageSquare, UserCheck } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Breadcrumbs from './Breadcrumbs';
 
 const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 const resolveAvatar = (avatarUrl) => {
@@ -11,8 +12,6 @@ const resolveAvatar = (avatarUrl) => {
     if (avatarUrl.startsWith('http')) return avatarUrl;
     return `${API_BASE}${avatarUrl}`;
 };
-
-import Breadcrumbs from './Breadcrumbs';
 
 const TopHeader = () => {
     const { user, logout, searchQuery, setSearchQuery, setIsChatOpen, setIsSidebarOpen } = useContext(AuthContext);
@@ -23,33 +22,28 @@ const TopHeader = () => {
     const [unreadChats, setUnreadChats] = useState(0);
     const dropdownRef = useRef(null);
     const notificationRef = useRef(null);
-    const location = useLocation();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchAllCounts = async () => {
             if (!user) return;
-            
             try {
-                // Fetch Pending Users for SuperAdmin
                 if (user.role === 'SuperAdmin') {
                     const { data: users } = await axios.get(`${API_BASE}/api/auth/users`);
                     const pending = users.filter(u => u.status === 'Pending' && u.role !== 'SuperAdmin');
                     setPendingCount(pending.length);
                 }
 
-                // Fetch Unread Chats for everyone
                 const { data: tasks } = await axios.get(`${API_BASE}/api/tasks`);
                 const totalUnread = tasks.reduce((sum, task) => sum + (task.unreadCount || 0), 0);
                 setUnreadChats(totalUnread);
-
             } catch (error) {
                 console.error('Error fetching notification counts', error);
             }
         };
 
         fetchAllCounts();
-        const interval = setInterval(fetchAllCounts, 10000); // 10s refresh
+        const interval = setInterval(fetchAllCounts, 10000);
         return () => clearInterval(interval);
     }, [user]);
 
@@ -69,69 +63,84 @@ const TopHeader = () => {
     }, []);
 
     return (
-        <header className="h-16 flex items-center justify-between px-4 lg:px-8 z-40 sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
             <div className="flex items-center gap-4">
-                {/* Mobile Menu Toggle */}
                 <button 
                     onClick={() => setIsSidebarOpen(true)}
-                    className="lg:hidden p-2 text-slate-500 hover:text-orange-500 transition-colors"
+                    className="lg:hidden p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors"
+                    aria-label="Open sidebar"
                 >
-                    <Menu className="w-6 h-6" />
+                    <Menu className="w-5 h-5" />
                 </button>
 
-                {/* Breadcrumbs - Hidden on small mobile */}
                 <div className="hidden sm:block">
                     <Breadcrumbs />
                 </div>
             </div>
             
-            <div className="flex items-center gap-6">
-                {/* Search Bar - Hidden on small mobile */}
-                <div className="relative hidden lg:flex items-center w-64 lg:w-80">
+            <div className="flex items-center gap-3 sm:gap-4">
+                {/* Global Search Bar */}
+                <div className="relative hidden md:flex items-center w-64 lg:w-72">
+                    <Search className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
                     <input 
                         type="text"
-                        placeholder="Search"
+                        placeholder="Search tasks, members..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-50 pl-4 pr-10 py-1.5 rounded-md text-sm border-none transition-all duration-200 outline-none placeholder:text-slate-400"
-                        style={{ color: 'var(--text-primary)' }}
+                        className="w-full bg-slate-50 dark:bg-slate-800/60 pl-9 pr-3 py-1.5 rounded-lg text-xs font-normal border border-slate-200 dark:border-slate-700/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                     />
-                    <Search className="absolute right-3 w-4 h-4 text-slate-500" />
                 </div>
                 
-                <div className="flex items-center gap-4">
-                    {/* Notification Icon */}
-                    <div className="relative" ref={notificationRef}>
-                        <button 
-                            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                            className="relative p-2 text-slate-400 hover:text-orange-500 transition-colors"
-                        >
-                            <Bell className="w-5 h-5" />
-                            {totalNotifications > 0 && (
-                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-black animate-pulse leading-none shadow-sm">
-                                    {totalNotifications}
-                                </span>
-                            )}
-                        </button>
+                {/* Theme Toggle Button */}
+                <button
+                    onClick={toggleTheme}
+                    className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    aria-label="Toggle theme"
+                >
+                    {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+                </button>
 
-                        {/* Notification Dropdown */}
-                        {isNotificationsOpen && (
-                            <div className="absolute top-12 right-0 w-64 py-2 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-scale-in">
-                                <div className="px-4 py-2 border-b border-slate-50">
-                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Notifications</h3>
-                                </div>
+                {/* Notifications Bell */}
+                <div className="relative" ref={notificationRef}>
+                    <button 
+                        onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                        className="relative p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        aria-label="Notifications"
+                    >
+                        <Bell className="w-4 h-4" />
+                        {totalNotifications > 0 && (
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                        )}
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {isNotificationsOpen && (
+                        <div className="absolute top-12 right-0 w-80 py-2 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 z-50 animate-dropdown">
+                            <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <h3 className="text-xs font-bold text-slate-900 dark:text-white">Notifications</h3>
+                                {totalNotifications > 0 && (
+                                    <span className="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">
+                                        {totalNotifications} new
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="py-1">
                                 {user?.role === 'SuperAdmin' && (
                                     <NavLink
                                         to="/permission-requests/pending"
                                         onClick={() => setIsNotificationsOpen(false)}
-                                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50 transition-colors"
+                                        className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                                            <UserPlus className="w-4 h-4" />
+                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <UserCheck className="w-4 h-4" />
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-slate-700">Pending Requests</p>
-                                            <p className="text-xs text-slate-400">{pendingCount} user{pendingCount !== 1 ? 's' : ''} waiting</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-slate-900 dark:text-white">Access Requests</p>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                {pendingCount} registration{pendingCount !== 1 ? 's' : ''} awaiting approval
+                                            </p>
                                         </div>
                                     </NavLink>
                                 )}
@@ -145,75 +154,71 @@ const TopHeader = () => {
                                             navigate('/chat');
                                         }
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-800 hover:bg-slate-50 transition-colors text-left"
+                                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                        <MessageCircle className="w-4 h-4" />
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <MessageSquare className="w-4 h-4" />
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="font-bold text-slate-700">Internal Chats</p>
-                                        <p className="text-xs text-slate-400">
-                                            {unreadChats > 0 ? `${unreadChats} unread message${unreadChats !== 1 ? 's' : ''}` : 'No new messages'}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-slate-900 dark:text-white">Workspace Messages</p>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                            {unreadChats > 0 ? `${unreadChats} unread message${unreadChats !== 1 ? 's' : ''}` : 'All caught up'}
                                         </p>
                                     </div>
-                                    {unreadChats > 0 && (
-                                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                    )}
                                 </button>
 
                                 {totalNotifications === 0 && (
-                                    <div className="px-4 py-8 text-center">
-                                        <p className="text-sm text-slate-400">No new notifications</p>
+                                    <div className="py-6 text-center">
+                                        <p className="text-xs text-slate-400">No new notifications</p>
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
+                </div>
 
-                    {/* Profile Button */}
+                {/* Profile Avatar & Dropdown */}
+                <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center pl-2 border-l border-slate-200"
+                        className="flex items-center gap-2 pl-2 focus:outline-none"
+                        aria-label="User profile options"
                     >
-                        <div className="w-8 h-8 rounded-full border-2 border-orange-100 flex items-center justify-center bg-orange-50 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                             {user?.avatarUrl ? (
                                 <img src={resolveAvatar(user.avatarUrl)} alt="avatar" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-orange-600 font-bold text-xs">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-bold text-xs">{user?.name?.charAt(0)?.toUpperCase()}</span>
                             )}
                         </div>
-                        <ChevronDown className={`w-3 h-3 ml-2 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                     </button>
-                </div>
 
-                {/* Dropdown Menu */}
-                {isProfileOpen && (
-                    <div className="absolute top-16 right-8 w-48 py-2 bg-white rounded-lg shadow-xl border border-slate-100 z-50 animate-scale-in">
-                        <NavLink
-                            to="/profile"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
-                        >
-                            <User className="w-4 h-4" />
-                            Profile
-                        </NavLink>
-                        <button
-                            onClick={toggleTheme}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
-                        >
-                            {darkMode ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-orange-500" />}
-                            Theme
-                        </button>
-                        <div className="my-1 border-t border-slate-100" />
-                        <button
-                            onClick={logout}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Sign Out
-                        </button>
-                    </div>
-                )}
+                    {isProfileOpen && (
+                        <div className="absolute top-12 right-0 w-52 py-1.5 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 z-50 animate-scale-in">
+                            <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                                <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
+                            </div>
+                            <NavLink
+                                to="/profile"
+                                onClick={() => setIsProfileOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <User className="w-3.5 h-3.5 text-slate-400" />
+                                Account Profile
+                            </NavLink>
+                            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                            <button
+                                onClick={logout}
+                                className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-left"
+                            >
+                                <LogOut className="w-3.5 h-3.5" />
+                                Sign Out
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
     );

@@ -2,7 +2,9 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import AIChatbot from '../components/AIChatbot';
-import { Sparkles, Bot, Zap, Shield, AlertCircle } from 'lucide-react';
+import { Sparkles, Bot, Zap, ShieldAlert, Cpu } from 'lucide-react';
+
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
 const AIChatPage = () => {
     const { user } = useContext(AuthContext);
@@ -10,21 +12,14 @@ const AIChatPage = () => {
 
     if (user?.role !== 'SuperAdmin' && user?.permissions?.aiChat?.view === false) {
         return (
-            <div className="flex flex-col items-center justify-center h-[70vh] animate-fade-in text-center px-4">
-                <div className="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
-                    <Shield className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+            <div className="flex flex-col items-center justify-center h-[65vh] animate-fade-in text-center px-4">
+                <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                    <ShieldAlert className="w-7 h-7" />
                 </div>
-                <h1 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>AI Access Denied</h1>
-                <p className="max-w-md text-lg font-medium mb-8" style={{ color: 'var(--text-muted)' }}>
-                    Your access to the AI Chat module has been restricted. 
-                    Please contact your administrator if you need this feature enabled.
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">AI Assistant Restricted</h1>
+                <p className="max-w-md text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                    Access to the AI intelligence workspace has been restricted for your profile by your organization administrator.
                 </p>
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-xl flex items-start gap-3 text-left max-w-sm">
-                    <AlertCircle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-orange-700 dark:text-orange-300">
-                        Managers can control AI features to maintain focus on specific project priorities.
-                    </p>
-                </div>
             </div>
         );
     }
@@ -32,15 +27,15 @@ const AIChatPage = () => {
     const fetchContext = async () => {
         try {
             const [usersRes, tasksRes] = await Promise.all([
-                axios.get('https://team-tracker-dbzf.onrender.com/api/auth/users'),
-                axios.get('https://team-tracker-dbzf.onrender.com/api/tasks')
+                axios.get(`${API_BASE}/api/auth/users`),
+                axios.get(`${API_BASE}/api/tasks`)
             ]);
             setDashboardData({
                 users: usersRes.data,
                 tasks: tasksRes.data
             });
         } catch (error) {
-            console.error("Error fetching AI context:", error);
+            console.error('Error fetching AI context:', error);
         }
     };
 
@@ -49,50 +44,55 @@ const AIChatPage = () => {
     }, []);
 
     return (
-        <div className="space-y-8 animate-fade-in pb-10">
+        <div className="space-y-6 animate-fade-in pb-8 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                        <Bot className="w-6 h-6 text-orange-600" />
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/80">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                        <Bot className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Chat with AI</h1>
-                        <p className="font-light mt-0.5" style={{ color: '#000', fontSize: '0.82em', opacity: 0.8 }}>Get instant answers and productivity tips.</p>
+                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            AI Workspace Assistant
+                        </h1>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            RAG-powered workspace analysis, instant task management, and team insights.
+                        </p>
                     </div>
                 </div>
-                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-full">
-                    <Zap className="w-4 h-4 text-orange-500 fill-orange-500" />
-                    <span className="text-xs font-bold text-orange-600 dark:text-orange-400">Powered by Team Tracker AI</span>
+
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-[11px] font-medium">
+                    <Cpu className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>GPT-OSS 20B</span>
                 </div>
             </div>
 
-            {/* Chat Container */}
-            <div className="max-w-4xl mx-auto">
+            {/* Chatbot Interface */}
+            <div>
                 <AIChatbot isFullPage={true} dashboardData={dashboardData} onActionComplete={fetchContext} />
                 
-                {/* Info Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                    <div className="card p-4 border-slate-200 dark:border-slate-800">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3">
-                            <Sparkles className="w-4 h-4 text-blue-600" />
+                {/* Capabilities Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div className="card p-4">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-2.5">
+                            <Sparkles className="w-4 h-4" />
                         </div>
-                        <h4 className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>Instant Help</h4>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Ask anything about your tasks or team performance.</p>
+                        <h2 className="font-bold text-xs text-slate-900 dark:text-white mb-1">Instant Insights</h2>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">Ask for completion velocity, workload imbalances, or priority bottlenecks.</p>
                     </div>
-                    <div className="card p-4 border-slate-200 dark:border-slate-800">
-                        <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
-                            <Zap className="w-4 h-4 text-green-600" />
+                    <div className="card p-4">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2.5">
+                            <Zap className="w-4 h-4" />
                         </div>
-                        <h4 className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>Smart Tips</h4>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Get personalized suggestions to improve your workflow.</p>
+                        <h2 className="font-bold text-xs text-slate-900 dark:text-white mb-1">Live CRM Actions</h2>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">Dispatch tasks, approve pending team registrations, and update statuses directly.</p>
                     </div>
-                    <div className="card p-4 border-slate-200 dark:border-slate-800">
-                        <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-3">
-                            <Bot className="w-4 h-4 text-orange-600" />
+                    <div className="card p-4">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2.5">
+                            <Bot className="w-4 h-4" />
                         </div>
-                        <h4 className="font-bold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>24/7 Support</h4>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Our AI is always available to assist with your queries.</p>
+                        <h2 className="font-bold text-xs text-slate-900 dark:text-white mb-1">Ground Truth Context</h2>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">Responses are augmented in real-time with your organization's live MongoDB snapshot.</p>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { User, Camera, Save } from 'lucide-react';
+import { User, Camera, Save, Shield, Mail, Check } from 'lucide-react';
 
 const API_BASE = 'https://team-tracker-dbzf.onrender.com';
 
@@ -15,6 +15,7 @@ const Profile = () => {
   const { user, updateUser } = useContext(AuthContext);
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -34,6 +35,8 @@ const Profile = () => {
       setSaving(true);
       const { data } = await axios.put(`${API_BASE}/api/users/me`, { name });
       updateUser({ name: data.name });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to update profile');
     } finally {
@@ -66,119 +69,129 @@ const Profile = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
-            Profile
-          </h1>
-          <p className="font-light mt-0.5" style={{ color: '#000', fontSize: '0.82em', opacity: 0.8 }}>
-            Update your name and profile photo.
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in max-w-4xl">
+      {/* Header */}
+      <div className="pb-2 border-b border-slate-100 dark:border-slate-800/80">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Account Settings
+        </h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Manage your personal details and public profile avatar.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Avatar card */}
-        <div className="card p-6">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Profile photo</p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>JPG/PNG/WebP up to 3MB</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div
-              className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center"
-              style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
-            >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Avatar Card */}
+        <div className="card p-6 flex flex-col items-center text-center">
+          <div className="relative mb-4 group">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-sm">
               {currentAvatar ? (
                 <img src={currentAvatar} alt="avatar" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-7 h-7" style={{ color: 'var(--text-muted)' }} />
+                <User className="w-10 h-10 text-slate-400" />
               )}
             </div>
 
-            <div className="flex-1">
+            <label className="absolute bottom-0 right-0 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full cursor-pointer shadow-md transition-transform hover:scale-105">
+              <Camera className="w-3.5 h-3.5" />
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => handlePickAvatar(e.target.files?.[0])}
-                className="block w-full text-xs"
-                style={{ color: 'var(--text-secondary)' }}
+                className="hidden"
               />
-              <div className="flex gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={handleUploadAvatar}
-                  disabled={!avatarFile || uploading}
-                  className="btn-primary px-4 py-2 text-xs disabled:opacity-60"
-                >
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </button>
-                {avatarFile && (
-                  <button
-                    type="button"
-                    onClick={() => { setAvatarFile(null); setAvatarPreview(''); }}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold"
-                    style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </div>
+            </label>
           </div>
+
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">{user?.name}</h2>
+          <span className="text-[11px] font-semibold text-slate-400 mt-0.5 block">{user?.role}</span>
+
+          {avatarFile && (
+            <div className="flex gap-2 mt-4 w-full">
+              <button
+                type="button"
+                onClick={handleUploadAvatar}
+                disabled={uploading}
+                className="btn-primary flex-1 py-1.5 text-xs font-semibold"
+              >
+                {uploading ? 'Uploading...' : 'Save Photo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAvatarFile(null); setAvatarPreview(''); }}
+                className="btn-secondary py-1.5 px-3 text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Details */}
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <User className="w-5 h-5 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Account details</p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Basic info used across the app</p>
-            </div>
-          </div>
+        {/* Profile Details Form */}
+        <div className="card p-6 md:col-span-2">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+            Personal Information
+          </h2>
 
           <form onSubmit={handleSave} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                Full name
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Full Name
               </label>
               <input
+                type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-base"
+                className="input-base text-xs py-2.5"
                 placeholder="Your name"
+                required
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                  Email
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Email Address
                 </label>
-                <input value={user?.email || ''} disabled className="input-base opacity-70 cursor-not-allowed" />
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    value={user?.email || ''}
+                    disabled
+                    className="input-base text-xs py-2.5 pl-9 bg-slate-50 dark:bg-slate-800/60 opacity-70 cursor-not-allowed text-slate-500"
+                  />
+                </div>
               </div>
+
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                  Role
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Assigned Role
                 </label>
-                <input value={user?.role || ''} disabled className="input-base opacity-70 cursor-not-allowed" />
+                <div className="relative">
+                  <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    value={user?.role || ''}
+                    disabled
+                    className="input-base text-xs py-2.5 pl-9 bg-slate-50 dark:bg-slate-800/60 opacity-70 cursor-not-allowed text-slate-500 font-semibold"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button type="submit" disabled={saving} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60 flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save changes'}
+            <div className="pt-2 flex items-center justify-between">
+              {savedSuccess ? (
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Changes saved
+                </span>
+              ) : <div />}
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn-primary py-2 px-4 text-xs font-semibold"
+              >
+                <Save className="w-3.5 h-3.5 mr-1" />
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>
@@ -189,4 +202,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

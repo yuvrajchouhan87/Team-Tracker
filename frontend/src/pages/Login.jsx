@@ -1,8 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-
+import { Mail, Lock, Eye, EyeOff, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import LoginStatusModal from '../components/LoginStatusModal';
 
 const Login = () => {
@@ -11,7 +10,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [loginStatus, setLoginStatus] = useState(null); // 'success', 'restricted', or null
+    const [loginStatus, setLoginStatus] = useState(null);
     const { login, logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -20,16 +19,12 @@ const Login = () => {
         setIsLoading(true);
         try {
             const userData = await login(email, password);
-            
-            // Check if user has dashboard permission
-            // Admins and Managers always have access
             if (userData.role === 'SuperAdmin' || userData.role === 'Manager') {
                 navigate('/');
             } else if (userData.permissions?.tasks?.view !== false) {
                 setLoginStatus('success');
             } else {
                 setLoginStatus('restricted');
-                // We logout because they shouldn't be authenticated if restricted
                 logout();
             }
         } catch (error) {
@@ -44,118 +39,167 @@ const Login = () => {
         navigate('/');
     };
 
-
-    const bgPattern = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%2394a3b8' fill-opacity='0.08' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.25v12.7l10.99 6.34 11-6.35V17.25L14 10.92 3 17.25zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.31zM15 0v7.5L27.99 15H28v-2.31L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31L17 42.65V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white relative overflow-hidden" 
-             style={{ backgroundImage: bgPattern }}>
-            
-            <div className="w-full max-w-md px-4 sm:px-6 z-10">
-                <div className="bg-white rounded-2xl p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col items-center">
-                    
-                    {/* Logo Section */}
-                    <div className="flex flex-col items-center mb-8">
-                        <h2 className="text-3xl font-bold text-gray-800">Sign In</h2>
-                        <p className="text-gray-400 text-sm mt-1 text-center">Please enter your details to access the dashboard</p>
+        <div className="min-h-screen w-full flex bg-slate-50 dark:bg-slate-950 animate-fade-in">
+            {/* Left Showcase Banner (Desktop) */}
+            <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 text-white p-12 flex-col justify-between overflow-hidden border-r border-slate-800">
+                {/* Background ambient accents */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Brand */}
+                <div className="flex items-center gap-3 relative z-10">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                        <Layers className="w-5 h-5" />
                     </div>
+                    <div>
+                        <span className="font-bold text-base tracking-tight leading-none block">Team Tracker</span>
+                        <span className="text-[11px] text-slate-400 block mt-0.5 font-medium">Enterprise Team Intelligence</span>
+                    </div>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="w-full space-y-5">
-                        {/* Email Field */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Email Address</label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#f97316]">
-                                    <Mail size={18} />
-                                </div>
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    placeholder="Enter Email Address"
-                                    className="w-full bg-[#f8fafc] border border-gray-100 rounded-lg py-3.5 pl-12 pr-4 text-sm text-gray-900 outline-none focus:border-[#f97316]/30 focus:bg-white transition-all shadow-sm"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password Field */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[#f97316]">
-                                    <Lock size={18} />
-                                </div>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    placeholder="Enter Password"
-                                    className="w-full bg-[#f8fafc] border border-gray-100 rounded-lg py-3.5 pl-12 pr-12 text-sm text-gray-900 outline-none focus:border-[#f97316]/30 focus:bg-white transition-all shadow-sm"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Remember Me & Forgot Password */}
-                        <div className="flex items-center justify-between pt-1">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div 
-                                    onClick={() => setRememberMe(!rememberMe)}
-                                    className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${
-                                        rememberMe ? 'bg-[#f97316] border-[#f97316]' : 'border-gray-200 bg-white group-hover:border-[#f97316]/50'
-                                    }`}
-                                >
-                                    {rememberMe && (
-                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="text-white">
-                                            <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <span className="text-xs font-semibold text-gray-500 select-none">Remember Me</span>
-                            </label>
-                            <Link to="#" className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors">
-                                Forgot Password?
-                            </Link>
-                        </div>
-
-                        {/* Login Button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-4 rounded-lg text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] disabled:opacity-70 mt-4 h-12 flex items-center justify-center overflow-hidden relative group"
-                            style={{
-                                background: 'linear-gradient(90deg, #f97316 0%, #ea580c 100%)',
-                                boxShadow: '0 4px 15px rgba(249, 115, 22, 0.3)'
-                            }}
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                            ) : (
-                                "Login"
-                            )}
-                            <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-[-20deg]" />
-                        </button>
-                    </form>
-
-                    {/* Footer / Register Link (kept existing functionality if desired, but image doesn't show it) */}
-                    <p className="mt-8 text-xs text-gray-400 font-medium">
-                        Don't have an account? <Link to="/register" className="text-blue-500 font-bold hover:underline">Register now</Link>
+                {/* Core Copy & Productivity Highlight */}
+                <div className="max-w-md relative z-10 space-y-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/60 text-xs text-indigo-300 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                        Next-Gen Workflow Platform
+                    </div>
+                    <h1 className="text-4xl font-extrabold tracking-tight leading-tight text-white">
+                        Manage your team. <br />
+                        <span className="text-indigo-400">Move work forward.</span>
+                    </h1>
+                    <p className="text-sm text-slate-300 leading-relaxed font-normal">
+                        Plan tasks, track progress in real-time, and keep your entire team synchronized with enterprise governance and AI-assisted workflows.
                     </p>
+
+                    <div className="pt-4 border-t border-slate-800/80 space-y-2.5">
+                        {[
+                            'Role-based permissions & governance',
+                            'Real-time task synchronization & internal chat',
+                            'Live workload analytics & AI automation',
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-300">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                <span>{item}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer note */}
+                <div className="relative z-10 flex items-center justify-between text-xs text-slate-500">
+                    <span>© 2026 Team Tracker Inc.</span>
+                    <span>Enterprise Security Compliant</span>
                 </div>
             </div>
 
-            {/* Bottom Credits / Activate Windows style (optional touch matching image) */}
-            <div className="absolute bottom-6 right-8 text-right opacity-30 select-none pointer-events-none hidden md:block">
-                <p className="text-[10px] font-medium text-gray-400">Activate Windows</p>
-                <p className="text-[8px] text-gray-400">Go to Settings to activate Windows.</p>
+            {/* Right Authentication Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+                <div className="w-full max-w-md">
+                    {/* Mobile Brand indicator */}
+                    <div className="lg:hidden flex items-center gap-2.5 mb-8">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                            <Layers className="w-4 h-4" />
+                        </div>
+                        <span className="font-bold text-base text-slate-900 dark:text-white">Team Tracker</span>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-sm animate-scale-in">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your credentials to access your workspace</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                    Work Email
+                                </label>
+                                <div className="relative flex items-center">
+                                    <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <Mail className="w-4 h-4" />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                        className="input-base input-icon-left text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        Password
+                                    </label>
+                                    <Link to="#" className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        Forgot password?
+                                    </Link>
+                                </div>
+                                <div className="relative flex items-center">
+                                    <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
+                                        <Lock className="w-4 h-4" />
+                                    </div>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        placeholder="••••••••••••"
+                                        className="input-base input-icon-left input-icon-right text-sm"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3.5 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                        aria-label="Toggle password visibility"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center pt-1">
+                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={e => setRememberMe(e.target.checked)}
+                                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700"
+                                    />
+                                    <span className="text-xs text-slate-600 dark:text-slate-400">Remember this device</span>
+                                </label>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="btn-primary w-full py-2.5 mt-2 text-xs font-semibold"
+                            >
+                                {isLoading ? (
+                                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                ) : (
+                                    <>
+                                        Sign In
+                                        <ArrowRight className="w-4 h-4 ml-1" />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                New team member?{' '}
+                                <Link to="/register" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+                                    Create an account
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {loginStatus && (

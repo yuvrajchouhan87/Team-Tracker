@@ -23,9 +23,9 @@ const PrivateRoute = ({ children, roles, permission }) => {
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
-        <p style={{ color: 'var(--text-secondary)' }} className="font-medium">Loading...</p>
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-9 h-9 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+        <p style={{ color: 'var(--text-muted)' }} className="text-xs font-medium">Loading workspace...</p>
       </div>
     </div>
   );

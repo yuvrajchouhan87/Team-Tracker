@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 const Breadcrumbs = () => {
   const location = useLocation();
@@ -11,13 +11,13 @@ const Breadcrumbs = () => {
     'admin': 'Admin Panel',
     'team': 'Team Members',
     'assign-task': 'Assign Task',
-    'chat': 'Internal Chat',
-    'profile': 'User Profile',
-    'permission-requests': 'Permission Requests',
+    'chat': 'Messages',
+    'profile': 'Profile',
+    'permission-requests': 'Access Requests',
     'pending': 'Pending',
     'approved': 'Approved',
     'rejected': 'Rejected',
-    'ai-chat': 'AI Chat',
+    'ai-chat': 'AI Assistant',
   };
 
   const getLabel = (path) => {
@@ -25,20 +25,20 @@ const Breadcrumbs = () => {
   };
 
   return (
-    <nav className="flex items-center gap-1.5 text-slate-500 overflow-x-auto no-scrollbar py-1">
+    <nav className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 overflow-x-auto no-scrollbar" aria-label="Breadcrumb">
       <NavLink 
         to="/" 
-        className="flex items-center hover:text-orange-500 transition-colors shrink-0"
+        className="font-medium hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shrink-0"
       >
-        <Home className="w-4 h-4" />
+        Workspace
       </NavLink>
 
       {pathnames.length > 0 && (
-        <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-50" />
+        <ChevronRight className="w-3 h-3 shrink-0 text-slate-300 dark:text-slate-600" />
       )}
 
       {pathnames.length === 0 ? (
-        <span className="text-sm font-medium text-slate-800">Dashboard</span>
+        <span className="font-semibold text-slate-900 dark:text-white">Dashboard</span>
       ) : (
         pathnames.map((value, index) => {
           const last = index === pathnames.length - 1;
@@ -48,18 +48,18 @@ const Breadcrumbs = () => {
           return (
             <React.Fragment key={to}>
               {last ? (
-                <span className="text-sm font-bold text-slate-900 truncate max-w-[120px] md:max-w-none">
+                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
                   {label}
                 </span>
               ) : (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <NavLink 
                     to={to} 
-                    className="text-sm hover:text-orange-500 transition-colors"
+                    className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                   >
                     {label}
                   </NavLink>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600" />
                 </div>
               )}
             </React.Fragment>

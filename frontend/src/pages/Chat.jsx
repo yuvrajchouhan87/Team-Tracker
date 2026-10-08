@@ -2,42 +2,16 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskChat from '../components/TaskChat';
-import { MessageCircle, ShieldCheck, User, X, AlertCircle, Shield } from 'lucide-react';
+import { MessageSquare, ShieldAlert, User, X, Search } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
-const roleConfig = {
-    SuperAdmin: {
-        label: 'SuperAdmin',
-        badgeBg: 'rgba(239, 68, 68, 0.12)',
-        badgeColor: '#ef4444',
-        avatarBg: 'bg-red-100 dark:bg-red-900/30',
-        avatarText: 'text-red-600 dark:text-red-400',
-        icon: ShieldCheck,
-    },
-    Manager: {
-        label: 'Manager',
-        badgeBg: 'rgba(59, 130, 246, 0.12)',
-        badgeColor: '#3b82f6',
-        avatarBg: 'bg-blue-100 dark:bg-blue-900/30',
-        avatarText: 'text-blue-600 dark:text-blue-400',
-        icon: User,
-    },
-    Developer: {
-        label: 'Developer',
-        badgeBg: 'rgba(16, 185, 129, 0.12)',
-        badgeColor: '#10b981',
-        avatarBg: 'bg-green-100 dark:bg-green-900/30',
-        avatarText: 'text-green-600 dark:text-green-400',
-        icon: User,
-    },
-    Intern: {
-        label: 'Intern',
-        badgeBg: 'rgba(245, 158, 11, 0.12)',
-        badgeColor: '#f59e0b',
-        avatarBg: 'bg-amber-100 dark:bg-amber-900/30',
-        avatarText: 'text-amber-600 dark:text-amber-400',
-        icon: User,
-    }
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
+
+const roleBadge = {
+    SuperAdmin: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
+    Manager: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
+    Developer: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+    Intern: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
 };
 
 const Chat = () => {
@@ -46,24 +20,18 @@ const Chat = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [search, setSearch] = useState('');
 
-    if ((user.role === 'Developer' || user.role === 'Intern') && user.permissions?.chat?.view === false) {
+    if ((user?.role === 'Developer' || user?.role === 'Intern') && user.permissions?.chat?.view === false) {
         return (
-            <div className="flex flex-col items-center justify-center h-[70vh] animate-fade-in text-center px-4">
-                <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-6">
-                    <Shield className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+            <div className="flex flex-col items-center justify-center h-[65vh] animate-fade-in text-center px-4">
+                <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                    <ShieldAlert className="w-7 h-7" />
                 </div>
-                <h1 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>Communication Restricted</h1>
-                <p className="max-w-md text-lg font-medium mb-8" style={{ color: 'var(--text-muted)' }}>
-                    Your access to the Chat module has been temporarily restricted by the SuperAdmin. 
-                    Please reach out to your project manager for more information.
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Messaging Restricted</h1>
+                <p className="max-w-md text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                    Access to the internal messaging module has been restricted for your profile by your project administrator.
                 </p>
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex items-start gap-3 text-left max-w-sm">
-                    <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                        Restricting chat access helps maintain a distraction-free environment during critical focus periods.
-                    </p>
-                </div>
             </div>
         );
     }
@@ -71,7 +39,7 @@ const Chat = () => {
     useEffect(() => {
         const fetchTasks = async () => {
             try {
-                const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/tasks');
+                const { data } = await axios.get(`${API_BASE}/api/tasks`);
                 const chatableTasks = data.filter(task => {
                     const partner = (user.role === 'Manager' || user.role === 'SuperAdmin')
                         ? task.assignedTo
@@ -85,11 +53,9 @@ const Chat = () => {
                 setLoading(false);
             }
         };
-
         fetchTasks();
     }, [user?.role]);
 
-    // Real-time unread count updates
     useEffect(() => {
         if (!socket) return;
         const handleNewMessage = (msg) => {
@@ -108,7 +74,7 @@ const Chat = () => {
         setSelectedTask(task);
         if (task.unreadCount > 0) {
             try {
-                await axios.put(`https://team-tracker-dbzf.onrender.com/api/messages/${task._id}/read`);
+                await axios.put(`${API_BASE}/api/messages/${task._id}/read`);
                 setTasks(prev => prev.map(t => 
                     t._id === task._id ? { ...t, unreadCount: 0 } : t
                 ));
@@ -125,169 +91,155 @@ const Chat = () => {
             : task.createdBy;
     };
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="w-8 h-8 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
-        </div>
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-72">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+                    <p className="text-xs font-medium text-slate-400">Loading messages...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const filtered = tasks.filter(t => 
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        getOtherUser(t)?.name?.toLowerCase().includes(search.toLowerCase())
     );
 
-    const selectedPartner = selectedTask ? getOtherUser(selectedTask) : null;
-    const partnerConfig = selectedPartner ? (roleConfig[selectedPartner.role] || roleConfig.Manager) : null;
-    const PartnerIcon = partnerConfig?.icon || User;
+    const partner = selectedTask ? getOtherUser(selectedTask) : null;
 
     return (
-        <div className="flex justify-center h-full animate-fade-in overflow-hidden">
-            <div 
-                className="flex w-full max-w-6xl bg-card border rounded-2xl overflow-hidden my-4 mx-4 shadow-sm"
-                style={{ 
-                    height: 'calc(100vh - 10rem)',
-                    borderColor: 'var(--border-color)',
-                    background: 'var(--bg-card)'
-                }}
-            >
-                {/* ─── Left Panel: Task / Conversation List ─── */}
-                <div
-                    className={`flex-shrink-0 flex-col md:flex ${
-                        selectedTask ? 'hidden md:flex' : 'flex'
-                    }`}
-                    style={{
-                        width: '320px',
-                        background: 'var(--bg-card)',
-                        borderRight: '1px solid var(--border-color)',
-                    }}
-                >
-                    {/* Header */}
-                    <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <div className="flex items-center gap-2 mb-1">
-                            <MessageCircle className="w-5 h-5 text-red-500" />
-                            <h2 className="text-base font-black" style={{ color: 'var(--text-primary)' }}>Messages</h2>
+        <div className="h-[calc(100vh-8.5rem)] card overflow-hidden flex flex-col md:flex-row animate-fade-in">
+            {/* Conversations List */}
+            <div className={`w-full md:w-80 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 ${
+                selectedTask ? 'hidden md:flex' : 'flex'
+            }`}>
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Workspace Chats</h2>
                         </div>
-                        <p className="font-light" style={{ color: '#000', fontSize: '0.82em', opacity: 0.8 }}>
-                            {tasks.length} conversation{tasks.length !== 1 ? 's' : ''}
-                        </p>
+                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                            {tasks.length}
+                        </span>
                     </div>
 
-                    {/* Task List */}
-                    <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-                        {tasks.length === 0 ? (
-                            <div className="text-center py-12">
-                                <MessageCircle className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
-                                <p style={{ color: 'var(--text-muted)' }} className="text-sm font-medium">No chats yet</p>
-                                <p style={{ color: 'var(--text-muted)' }} className="text-xs mt-1">Active tasks will appear here</p>
-                            </div>
-                        ) : (
-                            tasks.map((task) => {
-                                const partner = getOtherUser(task);
-                                const pConfig = roleConfig[partner?.role] || roleConfig.Manager;
-                                const PIcon = pConfig.icon;
-                                const isSelected = selectedTask?._id === task._id;
-
-                                return (
-                                    <button
-                                        key={task._id}
-                                        onClick={() => handleSelectTask(task)}
-                                        className="w-full flex items-start text-left p-3 rounded-xl transition-all relative"
-                                        style={isSelected ? {
-                                            background: 'rgba(239, 68, 68, 0.08)',
-                                            borderLeft: '3px solid #ef4444',
-                                        } : {
-                                            borderLeft: '3px solid transparent',
-                                        }}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mr-3 ${pConfig.avatarBg}`}>
-                                            <PIcon className={`w-5 h-5 ${pConfig.avatarText}`} />
-                                        </div>
- 
-                                        <div className="flex-1 min-w-0 pr-6">
-                                            <p className="text-sm font-semibold truncate" style={{ color: isSelected ? '#ef4444' : 'var(--text-primary)' }}>
-                                                {task.title}
-                                            </p>
-                                            <p className="text-xs truncate mt-0.5 font-semibold"
-                                                style={{ color: pConfig.badgeColor }}>
-                                                {pConfig.label}: {partner?.name || 'Unknown'}
-                                            </p>
-                                        </div>
-
-                                        {/* Unread Badge */}
-                                        {task.unreadCount > 0 && (
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-lg shadow-red-200 dark:shadow-none animate-bounce">
-                                                {task.unreadCount}
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                            })
-                        )}
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Search chats..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-800/60 pl-8 pr-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700/60 outline-none focus:border-indigo-500"
+                        />
                     </div>
                 </div>
 
-                {/* ─── Right Panel: Chat Window ─── */}
-                <div
-                    className={`flex-1 flex-col overflow-hidden md:flex ${
-                        selectedTask ? 'flex' : 'hidden md:flex'
-                    }`}
-                >
-                    {selectedTask ? (
-                        <>
-                            {/* Chat Header */}
-                            <div
-                                className="flex items-center justify-between px-5 py-3"
-                                style={{ borderBottom: '1px solid var(--border-color)' }}
-                            >
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${partnerConfig?.avatarBg}`}>
-                                        <PartnerIcon className={`w-4 h-4 ${partnerConfig?.avatarText}`} />
+                <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                    {filtered.length > 0 ? (
+                        filtered.map((task) => {
+                            const p = getOtherUser(task);
+                            const isSelected = selectedTask?._id === task._id;
+                            const badgeCls = roleBadge[p?.role] || 'bg-slate-100 text-slate-700';
+
+                            return (
+                                <button
+                                    key={task._id}
+                                    onClick={() => handleSelectTask(task)}
+                                    className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${
+                                        isSelected 
+                                            ? 'bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60' 
+                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent'
+                                    }`}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 text-xs flex-shrink-0">
+                                        {p?.name ? p.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-                                                {selectedPartner?.name || 'Unknown'}
-                                            </span>
-                                            <span
-                                                className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                                                style={{ background: partnerConfig?.badgeBg, color: partnerConfig?.badgeColor }}
-                                            >
-                                                {partnerConfig?.label}
-                                            </span>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                                {p?.name || 'Unknown'}
+                                            </p>
+                                            {task.unreadCount > 0 && (
+                                                <span className="min-w-[16px] h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center">
+                                                    {task.unreadCount}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                                            Task: {selectedTask.title}
+                                        <p className="text-[11px] text-slate-400 truncate font-medium">
+                                            {task.title}
                                         </p>
                                     </div>
-                                </div>
-
-                                <button
-                                    onClick={() => setSelectedTask(null)}
-                                    className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-muted-foreground hover:text-foreground"
-                                    title="Close chat"
-                                >
-                                    <X className="w-5 h-5" />
                                 </button>
-                            </div>
-
-                            {/* Inline Chat */}
-                            <div className="flex-1 flex flex-col overflow-hidden">
-                                <TaskChat
-                                    task={selectedTask}
-                                    currentUser={user}
-                                    otherUser={getOtherUser(selectedTask)}
-                                    onClose={() => setSelectedTask(null)}
-                                    inline={true}
-                                />
-                            </div>
-                        </>
+                            );
+                        })
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center">
-                            <div className="w-20 h-20 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-                                <MessageCircle className="w-10 h-10 text-red-400" />
-                            </div>
-                            <h3 className="text-xl font-black mb-2" style={{ color: 'var(--text-primary)' }}>Your Messages</h3>
-                            <p className="font-light text-center max-w-xs px-6" style={{ color: '#000', fontSize: '0.82em', opacity: 0.8 }}>
-                                Select a conversation from the left to start chatting about your projects.
-                            </p>
+                        <div className="py-12 text-center">
+                            <p className="text-xs text-slate-400">No active conversations</p>
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Conversation Window */}
+            <div className={`flex-1 flex flex-col ${selectedTask ? 'flex' : 'hidden md:flex'}`}>
+                {selectedTask ? (
+                    <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        {/* Conversation Header */}
+                        <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-xs flex-shrink-0">
+                                    {partner?.name ? partner.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                            {partner?.name || 'Workspace Colleague'}
+                                        </h3>
+                                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${roleBadge[partner?.role] || 'bg-slate-100'}`}>
+                                            {partner?.role}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 truncate">
+                                        Task: {selectedTask.title}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <button
+                                onClick={() => setSelectedTask(null)}
+                                className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                aria-label="Back to conversations"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Inline Chat Body */}
+                        <div className="flex-1 overflow-hidden">
+                            <TaskChat
+                                task={selectedTask}
+                                currentUser={user}
+                                otherUser={partner}
+                                onClose={() => setSelectedTask(null)}
+                                inline={true}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/40 dark:bg-slate-900/40">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
+                            <MessageSquare className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Select a Conversation</h3>
+                        <p className="text-xs text-slate-400 max-w-xs">
+                            Choose an active task from the sidebar to view chat logs and coordinate in real-time.
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -3,42 +3,16 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskChat from './TaskChat';
-import { MessageCircle, ShieldCheck, User, X, Search } from 'lucide-react';
+import { MessageSquare, User, X, Search } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
-const roleConfig = {
-    SuperAdmin: {
-        label: 'SuperAdmin',
-        badgeBg: 'rgba(249, 115, 22, 0.12)',
-        badgeColor: '#f97316',
-        avatarBg: 'bg-orange-100',
-        avatarText: 'text-orange-600',
-        icon: ShieldCheck,
-    },
-    Manager: {
-        label: 'Manager',
-        badgeBg: 'rgba(59, 130, 246, 0.12)',
-        badgeColor: '#3b82f6',
-        avatarBg: 'bg-blue-100 dark:bg-blue-900/30',
-        avatarText: 'text-blue-600 dark:text-blue-400',
-        icon: User,
-    },
-    Developer: {
-        label: 'Developer',
-        badgeBg: 'rgba(16, 185, 129, 0.12)',
-        badgeColor: '#10b981',
-        avatarBg: 'bg-green-100 dark:bg-green-900/30',
-        avatarText: 'text-green-600 dark:text-green-400',
-        icon: User,
-    },
-    Intern: {
-        label: 'Intern',
-        badgeBg: 'rgba(245, 158, 11, 0.12)',
-        badgeColor: '#f59e0b',
-        avatarBg: 'bg-amber-100 dark:bg-amber-900/30',
-        avatarText: 'text-amber-600 dark:text-amber-400',
-        icon: User,
-    }
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
+
+const roleBadge = {
+    SuperAdmin: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
+    Manager: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
+    Developer: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+    Intern: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
 };
 
 const ChatModal = () => {
@@ -47,13 +21,13 @@ const ChatModal = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [localSearch, setLocalSearch] = useState('');
 
     useEffect(() => {
         if (!isChatOpen) return;
-        
         const fetchTasks = async () => {
             try {
-                const { data } = await axios.get('https://team-tracker-dbzf.onrender.com/api/tasks');
+                const { data } = await axios.get(`${API_BASE}/api/tasks`);
                 const chatableTasks = data.filter(task => {
                     const partner = (user.role === 'Manager' || user.role === 'SuperAdmin')
                         ? task.assignedTo
@@ -67,25 +41,19 @@ const ChatModal = () => {
                 setLoading(false);
             }
         };
-
         fetchTasks();
     }, [isChatOpen, user?.role]);
 
-    // Listen for new messages to update unread counts in real-time
     useEffect(() => {
         if (!socket) return;
-
         const handleNewMessage = (msg) => {
             const taskId = msg.task?._id || msg.task;
-            
-            // If the message is for a task that is NOT currently selected, increment its unread count
             if (selectedTask?._id !== taskId && msg.sender?._id !== user?._id) {
                 setTasks(prev => prev.map(t => 
                     t._id === taskId ? { ...t, unreadCount: (t.unreadCount || 0) + 1 } : t
                 ));
             }
         };
-
         socket.on('newMessage', handleNewMessage);
         return () => socket.off('newMessage', handleNewMessage);
     }, [socket, selectedTask, user?._id]);
@@ -94,9 +62,7 @@ const ChatModal = () => {
         setSelectedTask(task);
         if (task.unreadCount > 0) {
             try {
-                // Mark as read in backend
-                await axios.put(`https://team-tracker-dbzf.onrender.com/api/messages/${task._id}/read`);
-                // Reset locally
+                await axios.put(`${API_BASE}/api/messages/${task._id}/read`);
                 setTasks(prev => prev.map(t => 
                     t._id === task._id ? { ...t, unreadCount: 0 } : t
                 ));
@@ -115,48 +81,43 @@ const ChatModal = () => {
 
     if (!isChatOpen) return null;
 
+    const query = localSearch || searchQuery;
     const filteredTasks = tasks.filter(t => 
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        getOtherUser(t)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        t.title.toLowerCase().includes(query.toLowerCase()) ||
+        getOtherUser(t)?.name?.toLowerCase().includes(query.toLowerCase())
     );
 
     const selectedPartner = selectedTask ? getOtherUser(selectedTask) : null;
-    const partnerConfig = selectedPartner ? (roleConfig[selectedPartner.role] || roleConfig.Manager) : null;
-    const PartnerIcon = partnerConfig?.icon || User;
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] modal-backdrop flex items-center justify-center p-4 animate-fade-in">
-            <div className="card w-full max-w-5xl h-[85vh] flex overflow-hidden animate-scale-in relative shadow-2xl" 
-                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
-                
-                {/* Close Button Top Right */}
+            <div className="card bg-white dark:bg-slate-900 w-full max-w-4xl h-[80vh] flex overflow-hidden animate-modal relative shadow-2xl">
+                {/* Close Button */}
                 <button 
                     onClick={() => setIsChatOpen(false)}
-                    className="absolute top-4 right-4 z-[60] w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="absolute top-3.5 right-3.5 z-20 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    aria-label="Close modal"
                 >
-                    <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                    <X className="w-4 h-4" />
                 </button>
 
                 {/* Left Side: Conversations */}
-                <div className={`w-full md:w-80 flex flex-col border-r ${selectedTask ? 'hidden md:flex' : 'flex'}`}
-                     style={{ borderColor: 'var(--border-color)' }}>
-                    
-                    <div className="p-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>Messages</h2>
-                            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                                <MessageCircle className="w-4 h-4 text-orange-600" />
-                            </div>
+                <div className={`w-full md:w-80 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 ${
+                    selectedTask ? 'hidden md:flex' : 'flex'
+                }`}>
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Workspace Messages</h2>
                         </div>
-
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                             <input 
                                 type="text"
                                 placeholder="Search conversations..."
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                className="input-base text-xs pl-9 py-2"
+                                value={localSearch}
+                                onChange={e => setLocalSearch(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-800/60 pl-8 pr-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700/60 outline-none focus:border-indigo-500"
                             />
                         </div>
                     </div>
@@ -164,45 +125,44 @@ const ChatModal = () => {
                     <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                         {loading ? (
                             <div className="flex justify-center py-10">
-                                <div className="w-6 h-6 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+                                <div className="w-5 h-5 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
                             </div>
                         ) : filteredTasks.length > 0 ? (
                             filteredTasks.map(task => {
                                 const partner = getOtherUser(task);
-                                const pConfig = roleConfig[partner?.role] || roleConfig.Manager;
                                 const isSelected = selectedTask?._id === task._id;
+                                const badge = roleBadge[partner?.role] || 'bg-slate-100 text-slate-700';
 
                                 return (
                                     <button 
                                         key={task._id}
                                         onClick={() => handleSelectTask(task)}
-                                        className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all relative ${
-                                            isSelected ? 'bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-800/20'
+                                        className={`w-full p-2.5 rounded-xl flex items-start gap-2.5 transition-all text-left ${
+                                            isSelected 
+                                                ? 'bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60' 
+                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent'
                                         }`}
                                     >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${pConfig.avatarBg}`}>
-                                            <pConfig.icon className={`w-5 h-5 ${pConfig.avatarText}`} />
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 text-xs flex-shrink-0">
+                                            {partner?.name ? partner.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
                                         </div>
-                                        <div className="text-left min-w-0 flex-1">
-                                            <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{task.title}</p>
-                                            <p className="text-xs font-semibold truncate" style={{ color: pConfig.badgeColor }}>
-                                                {partner?.name || 'Unknown'}
-                                            </p>
-                                        </div>
-                                        
-                                        {/* Unread Badge */}
-                                        {task.unreadCount > 0 && (
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-lg shadow-red-200 dark:shadow-none animate-bounce leading-none">
-                                                {task.unreadCount}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{partner?.name || 'Unknown'}</p>
+                                                {task.unreadCount > 0 && (
+                                                    <span className="min-w-[16px] h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center">
+                                                        {task.unreadCount}
+                                                    </span>
+                                                )}
                                             </div>
-                                        )}
+                                            <p className="text-[11px] text-slate-400 truncate">{task.title}</p>
+                                        </div>
                                     </button>
                                 );
                             })
                         ) : (
-                            <div className="text-center py-10 opacity-50">
-                                <MessageCircle className="w-10 h-10 mx-auto mb-2" />
-                                <p className="text-xs font-bold uppercase tracking-widest">No Chats</p>
+                            <div className="text-center py-12">
+                                <p className="text-xs text-slate-400">No conversations</p>
                             </div>
                         )}
                     </div>
@@ -212,32 +172,27 @@ const ChatModal = () => {
                 <div className={`flex-1 flex flex-col ${!selectedTask ? 'hidden md:flex' : 'flex'}`}>
                     {selectedTask ? (
                         <div className="flex flex-col h-full overflow-hidden">
-                            {/* Chat Header */}
-                            <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${partnerConfig.avatarBg}`}>
-                                        <PartnerIcon className={`w-5 h-5 ${partnerConfig.avatarText}`} />
+                            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between pr-12">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-xs flex-shrink-0">
+                                        {selectedPartner?.name ? selectedPartner.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-black flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                            {selectedPartner?.name}
-                                            <span className="text-[10px] px-2 py-0.5 rounded-full uppercase"
-                                                  style={{ background: partnerConfig.badgeBg, color: partnerConfig.badgeColor }}>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                                {selectedPartner?.name}
+                                            </h3>
+                                            <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${roleBadge[selectedPartner?.role] || 'bg-slate-100'}`}>
                                                 {selectedPartner?.role}
                                             </span>
-                                        </h3>
-                                        <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 truncate">
                                             Task: {selectedTask.title}
                                         </p>
                                     </div>
                                 </div>
-                                
-                                <button className="md:hidden" onClick={() => setSelectedTask(null)}>
-                                    <X className="w-5 h-5" />
-                                </button>
                             </div>
 
-                            {/* Messaging Component */}
                             <div className="flex-1 overflow-hidden">
                                 <TaskChat 
                                     task={selectedTask}
@@ -249,13 +204,13 @@ const ChatModal = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/10 dark:bg-slate-900/10">
-                            <div className="w-24 h-24 rounded-3xl bg-orange-50 flex items-center justify-center mb-6 shadow-sm border border-orange-100">
-                                <MessageCircle className="w-12 h-12 text-orange-500" />
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/40 dark:bg-slate-900/40">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
+                                <MessageSquare className="w-6 h-6" />
                             </div>
-                            <h2 className="text-2xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>Task Messaging</h2>
-                            <p className="text-sm max-w-sm" style={{ color: 'var(--text-muted)' }}>
-                                Select a conversation to start collaborating with your team about specific tasks and project updates.
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Select a Conversation</h2>
+                            <p className="text-xs text-slate-400 max-w-xs">
+                                Collaborate on active tasks with assignees and leads.
                             </p>
                         </div>
                     )}

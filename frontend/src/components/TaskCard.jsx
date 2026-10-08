@@ -1,19 +1,21 @@
 import { useContext, useState } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Clock, Play, Square, User, Calendar, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Clock, Play, Square, User, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import TaskChat from './TaskChat';
 
+const API_BASE = 'https://team-tracker-dbzf.onrender.com';
+
 const priorityConfig = {
-    High:   { bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-600 dark:text-red-400',    dot: 'bg-red-500',   icon: AlertTriangle },
-    Medium: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500', icon: null },
-    Low:    { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', dot: 'bg-green-500', icon: null },
+    High:   { bg: 'bg-rose-50 dark:bg-rose-950/40',    text: 'text-rose-600 dark:text-rose-400',    border: 'border-rose-200 dark:border-rose-800/40' },
+    Medium: { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/40' },
+    Low:    { bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/40' },
 };
 
 const statusConfig = {
-    Pending:    { bar: 'bg-amber-400', label: 'text-amber-600 dark:text-amber-400' },
-    'In Progress': { bar: 'bg-orange-500',  label: 'text-orange-600 dark:text-orange-400' },
-    Completed:  { bar: 'bg-green-500', label: 'text-green-600 dark:text-green-400' },
+    Pending:    { bar: 'bg-slate-300 dark:bg-slate-700', badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
+    'In Progress': { bar: 'bg-blue-500',  badge: 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400' },
+    Completed:  { bar: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' },
 };
 
 const TaskCard = ({ task, onUpdate }) => {
@@ -25,12 +27,12 @@ const TaskCard = ({ task, onUpdate }) => {
     const pConfig = priorityConfig[task.priority] || priorityConfig.Medium;
     const sConfig = statusConfig[task.status] || statusConfig.Pending;
 
-    const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'Completed';
+    const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Completed';
 
     const handleStatusChange = async (e) => {
         try {
-            await axios.put(`https://team-tracker-dbzf.onrender.com/api/tasks/${task._id}`, { status: e.target.value });
-            onUpdate();
+            await axios.put(`${API_BASE}/api/tasks/${task._id}`, { status: e.target.value });
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error updating status', error);
         }
@@ -38,7 +40,7 @@ const TaskCard = ({ task, onUpdate }) => {
 
     const startTimer = async () => {
         try {
-            const res = await axios.post('https://team-tracker-dbzf.onrender.com/api/timelogs/start', { taskId: task._id });
+            const res = await axios.post(`${API_BASE}/api/timelogs/start`, { taskId: task._id });
             setIsTimerRunning(true);
             setCurrentLogId(res.data._id);
         } catch (error) {
@@ -48,107 +50,107 @@ const TaskCard = ({ task, onUpdate }) => {
 
     const stopTimer = async () => {
         try {
-            await axios.put(`https://team-tracker-dbzf.onrender.com/api/timelogs/stop/${currentLogId}`);
+            await axios.put(`${API_BASE}/api/timelogs/stop/${currentLogId}`);
             setIsTimerRunning(false);
             setCurrentLogId(null);
-            onUpdate();
+            if (onUpdate) onUpdate();
         } catch (error) {
             console.error('Error stopping timer', error);
         }
     };
 
-    const otherUser = user.role === 'Manager' ? task.assignedTo : task.createdBy;
+    const otherUser = user?.role === 'Manager' ? task.assignedTo : task.createdBy;
     const canChat = otherUser && (otherUser._id || otherUser.id);
 
     return (
-        <div className="card p-5 flex flex-col gap-4 group relative">
-            {/* Status Bar */}
-            <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: 'var(--border-color)' }}>
-                <div className={`h-full rounded-full transition-all ${sConfig.bar} ${
-                    task.status === 'Completed' ? 'w-full' :
-                    task.status === 'In Progress' ? 'w-1/2' : 'w-1/6'
-                }`} />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-start justify-between gap-2">
-                <h3 className="font-bold text-sm leading-snug" style={{ color: 'var(--text-primary)' }}>
-                    {task.title}
-                </h3>
-                <span className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full ${pConfig.bg} ${pConfig.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${pConfig.dot}`} />
-                    {task.priority}
-                </span>
-            </div>
-
-            {/* Description */}
-            <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                {task.description}
-            </p>
-
-            {/* Meta */}
-            <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
-                <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : ''}`}>
-                    <Calendar className="w-3.5 h-3.5" />
-                    {isOverdue ? '⚠ Overdue · ' : ''}{new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-                {user.role === 'Manager' || user.role === 'SuperAdmin' ? (
-                    <div className="flex items-center gap-1" title={`Assigned to: ${task.assignedTo?.name || 'Unassigned'}`}>
-                        <User className="w-3.5 h-3.5" />
-                        <span className="truncate max-w-[100px]">{task.assignedTo?.name || 'Unassigned'}</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-1" title={`Assigned by: ${task.createdBy?.role || 'Manager'}`}>
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/50">
-                            <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">By:</span>
-                            <span className="truncate max-w-[80px] font-semibold text-orange-700 dark:text-orange-300">{task.createdBy?.role || 'Manager'}</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t gap-2" style={{ borderColor: 'var(--border-color)' }}>
-                {user.role === 'SuperAdmin' ? (
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${sConfig.label}`}
-                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}>
+        <div className="card card-hover p-4 flex flex-col justify-between gap-3 relative">
+            <div>
+                {/* Header: Priority & Progress indicator */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${pConfig.bg} ${pConfig.text} ${pConfig.border}`}>
+                        {task.priority === 'High' && <AlertTriangle className="w-2.5 h-2.5 mr-1" />}
+                        {task.priority} Priority
+                    </span>
+                    
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sConfig.badge}`}>
                         {task.status}
                     </span>
-                ) : (
-                    <select
-                        value={task.status}
-                        onChange={handleStatusChange}
-                        className="text-xs rounded-lg px-2 py-1.5 font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
-                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                    >
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                )}
+                </div>
 
-                <div className="flex items-center gap-2">
-                {user.role === 'Developer' && task.status !== 'Completed' && (
-                    !isTimerRunning ? (
-                        <button onClick={startTimer}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-all hover:shadow-md">
-                            <Play className="w-3 h-3 fill-white" /> Start
-                        </button>
+                {/* Title */}
+                <h3 className="font-bold text-xs leading-snug text-slate-900 dark:text-white line-clamp-1 mb-1">
+                    {task.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+                    {task.description || 'No description provided.'}
+                </p>
+            </div>
+
+            {/* Footer Details */}
+            <div className="space-y-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    {/* Due Date */}
+                    <div className={`flex items-center gap-1.5 ${isOverdue ? 'text-rose-500 font-semibold' : ''}`}>
+                        <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>
+                            {task.deadline 
+                                ? `${isOverdue ? 'Overdue · ' : ''}${new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` 
+                                : 'No deadline'}
+                        </span>
+                    </div>
+
+                    {/* Member */}
+                    <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium truncate max-w-[120px]" title={task.assignedTo?.name || 'Unassigned'}>
+                        <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                        <span className="truncate">{task.assignedTo?.name || 'Unassigned'}</span>
+                    </div>
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-between gap-2 pt-1">
+                    {user?.role === 'SuperAdmin' ? (
+                        <span className="text-[11px] font-medium text-slate-500">
+                            Status: <strong className="text-slate-800 dark:text-slate-200">{task.status}</strong>
+                        </span>
                     ) : (
-                        <button onClick={stopTimer}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all animate-pulse">
-                            <Square className="w-3 h-3 fill-white" /> Stop
-                        </button>
-                    )
-                )}
+                        <select
+                            value={task.status}
+                            onChange={handleStatusChange}
+                            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[11px] font-medium text-slate-800 dark:text-slate-200 px-2 py-1 outline-none focus:border-indigo-500"
+                        >
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    )}
 
+                    <div className="flex items-center gap-2">
+                        {user?.role === 'Developer' && task.status !== 'Completed' && (
+                            !isTimerRunning ? (
+                                <button 
+                                    onClick={startTimer}
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                                >
+                                    <Play className="w-2.5 h-2.5 fill-white" /> Start
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={stopTimer}
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white transition-colors animate-pulse"
+                                >
+                                    <Square className="w-2.5 h-2.5 fill-white" /> Stop
+                                </button>
+                            )
+                        )}
 
-
-                {task.status === 'Completed' && (
-                    <span className="text-xs font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-green-500" /> Done
-                    </span>
-                )}
+                        {task.status === 'Completed' && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Resolved
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
